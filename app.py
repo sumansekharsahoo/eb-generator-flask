@@ -1,10 +1,39 @@
 from flask import Flask, render_template, request, redirect, url_for, session
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 import math
 import hashlib
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = "brundaban"
+app.secret_key = "brundabansumansekhar"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///ebrecord.sqlite3"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
+# app.app_context().push()
+
+
+class ebrecord(db.Model):
+    __tablename__ = "ebrecord"
+
+    rid = db.Column(db.Integer, primary_key=True)
+    m1 = db.Column(db.Integer)
+    m2 = db.Column(db.Integer)
+    m3 = db.Column(db.Integer)
+    p = db.Column(db.Integer)
+    a1 = db.Column(db.Integer)
+    a2 = db.Column(db.Integer)
+    b1 = db.Column(db.Integer)
+    b2 = db.Column(db.Integer)
+    c1 = db.Column(db.Integer)
+    c2 = db.Column(db.Integer)
+
+    def __repr__(self):
+        return f"[{self.rid},{self.m1},{self.m2},{self.m3},{self.a1},{self.a2},{self.b1},{self.b2},{self.c1},{self.c2}]"
+
+
+migrate = Migrate(app, db)
 
 
 @app.route("/", methods=["POST", "GET"])
@@ -15,7 +44,7 @@ def login():
         hasher.update(pwd.encode())
         if (
             hasher.hexdigest()
-            == "4af9081b15a5ee584fc4618fd8b842bafbad7f77327bb5364ff1e021b9203a8a"
+            == "a47f9feb93f011ce426dc4540c666ff7afd41ad45435d6fb64949938835182d8"
         ):
             session["login"] = True
             return redirect(url_for("home"))
@@ -107,6 +136,8 @@ class EClass:
         self._rowDet = None
         self._rowVal = None
         self.unitsAlloted = [0, 0, 0, 0, 0, 0]
+        self.distb = [m1, m2, m3]
+
         ct = 0
         nonNeg = {}
         for i in range(len(unitsRemain)):
@@ -167,18 +198,33 @@ class EClass:
             2,
         )
         asPB = (
-            str(round(self.unitsAlloted[0] + self.unitsAlloted[1], 2))
+            str(self.distb[0])
             + "+"
-            + str(round(self.unitsAlloted[3] + self.unitsAlloted[5], 2))
+            + str(self.distb[1])
             + "+"
-            + str(round(self.unitsAlloted[2] + self.unitsAlloted[4], 2))
+            + str(self.distb[2])
             + "="
-            + str(totalAllot)
+            + str(self.totalunit)
             + "*"
             + str(self.rate)
             + "="
-            + str(round(totalAllot * self.rate, 2))
+            + str(round(self.totalunit * self.rate, 2))
         )
+
+        # asPB = (
+        #     str(round(self.unitsAlloted[0] + self.unitsAlloted[1], 2))
+        #     + "+"
+        #     + str(round(self.unitsAlloted[3] + self.unitsAlloted[5], 2))
+        #     + "+"
+        #     + str(round(self.unitsAlloted[2] + self.unitsAlloted[4], 2))
+        #     + "="
+        #     + str(totalAllot)
+        #     + "*"
+        #     + str(self.rate)
+        #     + "="
+        #     + str(round(totalAllot * self.rate, 2))
+        # )
+
         self._rowVal.append(round(totalAllot * self.rate, 2))
         self._rowDet.append(asPB)
         for i in self.unitsAlloted:
@@ -398,4 +444,5 @@ def result():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # db.create_all()
+    app.run(debug=False)
