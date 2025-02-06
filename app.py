@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 import math
 import hashlib
 from datetime import datetime
@@ -31,9 +30,6 @@ class ebrecord(db.Model):
 
     def __repr__(self):
         return f"[{self.rid},{self.m1},{self.m2},{self.m3},{self.a1},{self.a2},{self.b1},{self.b2},{self.c1},{self.c2}]"
-
-
-migrate = Migrate(app, db)
 
 
 @app.route("/", methods=["POST", "GET"])
@@ -109,14 +105,16 @@ class House:
 
     def setUnit(self, diff_share, pump_share):
         self._unit = self.read + diff_share + pump_share
+        rounded_ds = "{:.3f}".format(diff_share)
+        rounded_tot = "{:.3f}".format(self._unit)
         self._unitCStr = (
             str(self.read)
             + "+"
-            + str(diff_share)
+            + str(rounded_ds)
             + "+"
             + str(pump_share)
             + "="
-            + str(self._unit)
+            + str(rounded_tot)
         )
 
     def getUnit(self):
@@ -309,12 +307,12 @@ def home():
             m2.setDiff(b2.read + c2.read)
             m3.setDiff(b1.read + c1.read)
 
-            a1.setUnit(m1.getDiff() / 2, pump_distb)
-            a2.setUnit(m1.getDiff() / 2, pump_distb)
-            b1.setUnit(m3.getDiff() / 2, pump_distb)
-            c1.setUnit(m3.getDiff() / 2, pump_distb)
-            b2.setUnit(m2.getDiff() / 2, pump_distb)
-            c2.setUnit(m2.getDiff() / 2, pump_distb)
+            a1.setUnit(m1.getDiff() / 4, pump_distb)
+            a2.setUnit(m1.getDiff() / 4, pump_distb)
+            b1.setUnit(m3.getDiff() / 2 + m1.getDiff() / 8, pump_distb)
+            c1.setUnit(m3.getDiff() / 2 + m1.getDiff() / 8, pump_distb)
+            b2.setUnit(m2.getDiff() / 2 + m1.getDiff() / 8, pump_distb)
+            c2.setUnit(m2.getDiff() / 2 + m1.getDiff() / 8, pump_distb)
             session["meter"] = [
                 [m1.now, m1.prev, m1.read],
                 [m2.now, m2.prev, m2.read],
@@ -388,7 +386,7 @@ def home():
             edval = []
             edmfcval = []
             rebval = []
-            swpval = 1200
+            swpval = 1500
             swparr = [swpval]
             misc_sum = 0
             for i in misc:
